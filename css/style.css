@@ -1,0 +1,11 @@
+.privacy-note {
+    margin-top: 1.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.privacy-note p {
+    margin: 0;
+}
