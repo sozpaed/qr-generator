@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR-Code Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 500px;
+            margin: 3rem auto;
+            padding: 0 1rem;
+            color: #1f2937;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        input[type="url"] {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 1rem;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            text-align: left;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .logo-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        input[type="color"] {
+            width: 100%;
+            height: 38px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #fff;
+            padding: 2px;
+        }
+        input[type="file"] {
+            font-size: 0.85rem;
+            flex: 1;
+        }
+        select, input[type="range"] {
+            width: 100%;
+            height: 38px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            padding: 0 0.5rem;
+            background: #fff;
+            box-sizing: border-box;
+        }
+        button.clear-btn {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.8rem;
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: none;
+        }
+        .preview {
+            margin: 1.5rem 0;
+            min-height: 240px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #e5e7eb;
+            border-radius: 12px;
+            padding: 1rem;
+            overflow: auto;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            display: none;
+        }
+        .actions {
+            text-align: center;
+        }
+        a.btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #2563eb;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        a.btn.disabled {
+            background: #9ca3af;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>QR-Code Generator</h1>
+    <input type="url" id="urlInput" placeholder="https://www.beispiel.de" autofocus>
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="fillColor">Vordergrundfarbe</label>
+            <input type="color" id="fillColor" value="#000000">
+        </div>
+        <div class="control-group">
+            <label for="backColor">Hintergrundfarbe</label>
+            <input type="color" id="backColor" value="#ffffff">
+        </div>
+        <div class="control-group">
+            <label for="boxSize">Kästchengröße: <span id="boxSizeVal">10</span> px</label>
+            <input type="range" id="boxSize" min="5" max="20" value="10">
+        </div>
+        <div class="control-group">
+            <label for="errorCorrection">Fehlerkorrektur</label>
+            <select id="errorCorrection">
+                <option value="L">L – Niedrig (7 %)</option>
+                <option value="M" selected>M – Mittel (15 %)</option>
+                <option value="Q">Q – Hoch (25 %)</option>
+                <option value="H">H – Maximal (30 %)</option>
+            </select>
+        </div>
+        <div class="control-group full-width">
+            <label for="logoInput">Eigenes Logo (optional, PNG/JPG/WebP)</label>
+            <div class="logo-row">
+                <input type="file" id="logoInput" accept="image/png, image/jpeg, image/webp">
+                <button type="button" id="clearLogoBtn" class="clear-btn">Entfernen</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview" id="previewBox">
+        <span id="placeholderText" style="color:#6b7280;">Link eingeben für Live-Vorschau</span>
+        <canvas id="qrCanvas"></canvas>
+    </div>
+
+    <div class="actions">
+        <a id="downloadBtn" class="btn disabled" download="qrcode.png">PNG herunterladen</a>
+    </div>
+
+    <script>
+        // UTF-8-Kodierung für Sonderzeichen und Umlaute aktivieren
+        qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+
+        const urlInput = document.getElementById('urlInput');
+        const fillColorInput = document.getElementById('fillColor');
+        const backColorInput = document.getElementById('backColor');
+        const boxSizeInput = document.getElementById('boxSize');
+        const boxSizeVal = document.getElementById('boxSizeVal');
+        const errorCorrectionInput = document.getElementById('errorCorrection');
+        const logoInput = document.getElementById('logoInput');
+        const clearLogoBtn = document.getElementById('clearLogoBtn');
+        const placeholderText = document.getElementById('placeholderText');
+        const canvas = document.getElementById('qrCanvas');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        let loadedLogo = null;
+
+        [urlInput, fillColorInput, backColorInput, boxSizeInput, errorCorrectionInput].forEach(el => {
+            el.addEventListener('input', updateQR);
+            el.addEventListener('change', updateQR);
+        });
+
+        logoInput.addEventListener('change', () => {
+            const file = logoInput.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    loadedLogo = img;
+                    clearLogoBtn.style.display = 'inline-block';
+                    errorCorrectionInput.value = 'H';
+                    updateQR();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        clearLogoBtn.addEventListener('click', () => {
+            logoInput.value = '';
+            loadedLogo = null;
+            clearLogoBtn.style.display = 'none';
+            updateQR();
+        });
+
+        function updateQR() {
+            const boxSize = parseInt(boxSizeInput.value, 10);
+            boxSizeVal.textContent = boxSize;
+
+            const url = urlInput.value.trim();
+            if (!url) {
+                canvas.style.display = 'none';
+                placeholderText.style.display = 'inline';
+                placeholderText.textContent = 'Link eingeben für Live-Vorschau';
+                downloadBtn.classList.add('disabled');
+                downloadBtn.removeAttribute('href');
+                return;
+            }
+
+            const fillColor = fillColorInput.value;
+            const backColor = backColorInput.value;
+            const ecLevel = loadedLogo ? 'H' : errorCorrectionInput.value;
+
+            try {
+                // Version 0 wählt automatisch die passende Matrixgröße
+                const qr = qrcode(0, ecLevel);
+                qr.addData(url);
+                qr.make();
+
+                const moduleCount = qr.getModuleCount();
+                const border = 4;
+                const totalSize = (moduleCount + border * 2) * boxSize;
+
+                canvas.width = totalSize;
+                canvas.height = totalSize;
+                const ctx = canvas.getContext('2d');
+
+                // Hintergrund füllen
+                ctx.fillStyle = backColor;
+                ctx.fillRect(0, 0, totalSize, totalSize);
+
+                // QR-Module zeichnen
+                ctx.fillStyle = fillColor;
+                for (let row = 0; row < moduleCount; row++) {
+                    for (let col = 0; col < moduleCount; col++) {
+                        if (qr.isDark(row, col)) {
+                            ctx.fillRect(
+                                (col + border) * boxSize,
+                                (row + border) * boxSize,
+                                boxSize,
+                                boxSize
+                            );
+                        }
+                    }
+                }
+
+                // Optionales Logo mittig mit Schutzrand einfügen
+                if (loadedLogo) {
+                    const maxLogoSize = Math.floor(totalSize * 0.22);
+                    const scale = Math.min(
+                        maxLogoSize / loadedLogo.width,
+                        maxLogoSize / loadedLogo.height
+                    );
+                    const logoW = Math.round(loadedLogo.width * scale);
+                    const logoH = Math.round(loadedLogo.height * scale);
+
+                    const pad = Math.max(4, Math.floor(boxSize / 2));
+                    const bgW = logoW + pad * 2;
+                    const bgH = logoH + pad * 2;
+                    const bgX = Math.floor((totalSize - bgW) / 2);
+                    const bgY = Math.floor((totalSize - bgH) / 2);
+
+                    ctx.fillStyle = backColor;
+                    ctx.fillRect(bgX, bgY, bgW, bgH);
+
+                    ctx.drawImage(loadedLogo, bgX + pad, bgY + pad, logoW, logoH);
+                }
+
+                placeholderText.style.display = 'none';
+                canvas.style.display = 'block';
+                downloadBtn.href = canvas.toDataURL('image/png');
+                downloadBtn.classList.remove('disabled');
+            } catch (err) {
+                canvas.style.display = 'none';
+                placeholderText.style.display = 'inline';
+                placeholderText.textContent = 'Text ist zu lang für einen QR-Code.';
+                downloadBtn.classList.add('disabled');
+            }
+        }
+    </script>
+</body>
+</html>
