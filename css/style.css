@@ -245,3 +245,17 @@ button.clear-btn:hover {
         padding: 1.25rem;
     }
 }
+
+.privacy-note .footer-links {
+    margin-top: 0.65rem;
+}
+
+.privacy-note a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.privacy-note a:hover {
+    text-decoration: underline;
+}
