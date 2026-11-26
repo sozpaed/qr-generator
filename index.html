@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' data: blob:;">
     <title>QR-Code Generator</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2">
     <script
         src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"
         integrity="sha384-lQXOAyZwHXE55JFyrOMB7nY2Wv+m5ZWNtJcHrd1rceRQXAYNLak8ukN5TjBTcIwz"
         crossorigin="anonymous"
         defer></script>
-    <script src="js/app.js" defer></script>
+    <script src="js/app.js?v=2" defer></script>
 </head>
 <body>
     <main class="container">
@@ -74,6 +74,9 @@
         <footer class="privacy-note">
             <p>
                 <strong>Hinweis zur Datenverarbeitung:</strong> Die QR-Code-Erstellung erfolgt vollständig lokal in deinem Browser – eingegebene Links und hochgeladene Logos verlassen dein Gerät nicht. Zur Bereitstellung der Programmbibliothek (<code>qrcode-generator</code>) wird beim Laden der Seite eine Verbindung zum CDN-Dienst <strong>jsDelivr</strong> aufgebaut, wobei technisch bedingt deine IP-Adresse übermittelt wird.
+            </p>
+            <p class="footer-links">
+                <a href="https://github.com/sozpaed/qr-generator#readme" target="_blank" rel="noopener noreferrer">Projektinfos & Kontakt (GitHub)</a>
             </p>
         </footer>
     </main>
